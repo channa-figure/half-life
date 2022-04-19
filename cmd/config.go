@@ -115,10 +115,11 @@ type DiscordChannelConfig struct {
 	Username     string               `yaml:"username"`
 }
 type TwilioConfig struct {
-	AccountSid string `yaml:"account-sid"`
-	AuthToken  string `yaml:"auth-token"`
-	To         string `yaml:"to"`
-	From       string `yaml:"from"`
+	AccountSid          string `yaml:"account-sid"`
+	AuthToken           string `yaml:"auth-token"`
+	To                  string `yaml:"to"`
+	From                string `yaml:"from"`
+	SendStatusAtStartup bool   `yaml:"send-status-at-startup"`
 }
 
 type Sentry struct {

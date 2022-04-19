@@ -17,15 +17,21 @@ type TwilioNotificationService struct {
 	to          string
 	from        string
 	endpointUrl string
+	// flag to determine if a status should be sent at the startup of
+	// notification service.  This will confirm twilio is setup properly.
+	sendStatusAtStartup bool
+	startup             bool // if this is the first startup pass
 }
 
-func NewTwilioNotificationService(accountSid, authToken, to, from string) *TwilioNotificationService {
+func NewTwilioNotificationService(accountSid, authToken, to, from string, sendStatusAtStartup bool) *TwilioNotificationService {
 	return &TwilioNotificationService{
-		accountSid:  accountSid,
-		authToken:   authToken,
-		endpointUrl: fmt.Sprintf("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json", accountSid),
-		to:          to,
-		from:        from,
+		accountSid:          accountSid,
+		authToken:           authToken,
+		endpointUrl:         fmt.Sprintf("https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json", accountSid),
+		to:                  to,
+		from:                from,
+		sendStatusAtStartup: sendStatusAtStartup,
+		startup:             true,
 	}
 }
 
@@ -136,7 +142,7 @@ func (service *TwilioNotificationService) SendSMS(msg string) error {
 		decoder := json.NewDecoder(resp.Body)
 		err := decoder.Decode(&data)
 		if err == nil {
-			fmt.Println(data["sid"])
+			println(fmt.Sprintf("Successfully sent sms id %s msg %s to %s", data["sid"], msg, service.to))
 		}
 		return nil
 	} else {
@@ -152,13 +158,16 @@ func (service *TwilioNotificationService) UpdateValidatorRealtimeStatus(
 	stats ValidatorStats,
 	writeConfigMutex *sync.Mutex,
 ) {
-	statusMsg := getCurrentStatsSms(stats, vm)
-	// err := service.SendSMS(statusMsg)
-	// if err != nil {
-	// 	fmt.Printf("Error Sending Twilio message: %v\n", err)
-	// 	return
-	// }
-	fmt.Printf("Twilio TODO: implement configurable period to send sms status message: %s", statusMsg)
+	if service.sendStatusAtStartup && service.startup {
+		statusMsg := getCurrentStatsSms(stats, vm)
+		err := service.SendSMS(statusMsg)
+		if err != nil {
+			fmt.Printf("Error Sending Twilio message: %v\n", err)
+			service.startup = false
+			return
+		}
+	}
+	service.startup = false
 }
 
 // implements NotificationService interface
@@ -180,10 +189,11 @@ func (service *TwilioNotificationService) SendValidatorAlertNotification(
 		for _, alert := range alertNotification.Alerts {
 			alertString += fmt.Sprintf("\n• %s", alert)
 		}
-		err := service.SendSMS(fmt.Sprintf("%s\n**Errors:**\n%s", title, strings.Trim(alertString, "\n")))
+		smsMsg := fmt.Sprintf("%s %s\n**Errors:**\n%s", iconError, title, strings.Trim(alertString, "\n"))
+
+		err := service.SendSMS(smsMsg)
 		if err != nil {
 			fmt.Printf("Error Sending Twilio message: %v\n", err)
-			return
 		}
 	}
 
@@ -192,11 +202,10 @@ func (service *TwilioNotificationService) SendValidatorAlertNotification(
 		for _, alert := range alertNotification.ClearedAlerts {
 			clearedAlertsString += fmt.Sprintf("\n• %s", alert)
 		}
-		msg := fmt.Sprintf("%s\n**Errors cleared:**\n%s", title, strings.Trim(clearedAlertsString, "\n"))
+		msg := fmt.Sprintf("%s %s\n**Errors cleared:**\n%s", iconGood, title, strings.Trim(clearedAlertsString, "\n"))
 		err := service.SendSMS(msg)
 		if err != nil {
 			fmt.Printf("Error Sending Twilio message: %v\n", err)
-			return
 		}
 	}
 }
