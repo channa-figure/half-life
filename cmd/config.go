@@ -96,6 +96,7 @@ type ValidatorAlertNotification struct {
 type NotificationsConfig struct {
 	Service string                `yaml:"service"`
 	Discord *DiscordChannelConfig `yaml:"discord"`
+	Twilio  *TwilioConfig         `yaml:"twilio"`
 }
 
 type HalfLifeConfig struct {
@@ -112,6 +113,12 @@ type DiscordChannelConfig struct {
 	Webhook      DiscordWebhookConfig `yaml:"webhook"`
 	AlertUserIDs []string             `yaml:"alert-user-ids"`
 	Username     string               `yaml:"username"`
+}
+type TwilioConfig struct {
+	AccountSid string `yaml:"account-sid"`
+	AuthToken  string `yaml:"auth-token"`
+	To         string `yaml:"to"`
+	From       string `yaml:"from"`
 }
 
 type Sentry struct {

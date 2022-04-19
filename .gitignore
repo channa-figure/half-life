@@ -1,3 +1,5 @@
+.vscode/
 config.yaml
 halflife
 dist/
+vendor/

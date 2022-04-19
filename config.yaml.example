@@ -7,6 +7,11 @@ notifications:
     alert-user-ids: 
       - DISCORD_USER_ID
     username: HalfLife
+  twilio:
+    account-sid: account-sid-string
+    auth-token: account-token-string
+    to: +15555551234
+    from: +15555555678
 validators:
 - name: Osmosis
   rpc: http://SOME_OSMOSIS_RPC_SERVER:26657

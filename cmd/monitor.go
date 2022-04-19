@@ -39,6 +39,11 @@ var monitorCmd = &cobra.Command{
 				panic("Discord configuration not present in config.yaml")
 			}
 			notificationService = NewDiscordNotificationService(config.Notifications.Discord.Webhook.ID, config.Notifications.Discord.Webhook.Token)
+		case "twilio":
+			if config.Notifications.Twilio == nil {
+				panic("Twilio configuration not present in config.yaml")
+			}
+			notificationService = NewTwilioNotificationService(config.Notifications.Twilio.AccountSid, config.Notifications.Twilio.AuthToken, config.Notifications.Twilio.To, config.Notifications.Twilio.From)
 		default:
 			if config.Notifications.Service == "" {
 				panic("Notification service not configured in config.yaml")
